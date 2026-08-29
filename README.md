@@ -12,7 +12,7 @@ Responsive one-page website built for GitHub Pages.
 - Merch — the only navigation link that leaves the website
 
 ## Music player
-The player stays visible across the bottom of the site. It includes cover art, play/pause, progress, time, and a minimize button. When minimized, it becomes a compact player on the lower-right side.
+The player stays visible across the bottom of the site and now has a subtle green glow behind it so it stands apart from the page. It includes cover art, play/pause, progress, time, and a minimize button. When minimized, it becomes a compact player on the lower-right side.
 
 ## Admin
 Open `admin.html` and enter password: `abc123`.
@@ -31,7 +31,7 @@ Put songs in `assets/audio/`, for example:
 Put images in `assets/images/`, for example:
 `assets/images/my-time-cover.jpg`
 
-Then enter those relative paths in the admin.
+Then enter those relative paths in the admin. The player now also recognizes a normal GitHub `.../blob/...` file URL and converts it to the raw audio file automatically. For the most reliable setup, use the relative path like `assets/audio/my-time.mp3`.
 
 ### Tour buttons
 A tour button appears only when BOTH `Button Label` and `Button Link` are filled in. This lets you use labels like `BUY TICKETS`, `MORE DETAILS`, or anything else. Leave both blank for no button.
@@ -48,3 +48,8 @@ GitHub Pages is static hosting, so this lightweight admin does not write directl
 
 ## Bookings form
 The Bookings form uses FormSubmit's AJAX endpoint so the visitor stays on the site after submitting. FormSubmit may require a one-time email activation for the destination email address before submissions are delivered.
+
+
+## Artwork and YouTube thumbnails
+- Music cover art is controlled in Admin with **Square Cover Art Path / URL**. Upload cover images into `assets/images/` and use a path such as `assets/images/my-song-cover.jpg`. The site displays music artwork as a square 1:1 cover.
+- For Music Videos, paste the normal YouTube URL. If **Thumbnail Override Path / URL** is blank, the site automatically uses the YouTube video thumbnail. If you provide an override image, that image is used instead, while the video still keeps the centered YouTube-style play button.
