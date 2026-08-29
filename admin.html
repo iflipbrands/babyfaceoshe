@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BabyFace Oshe Admin</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <section class="admin-panel" id="loginBox">
+      <h1>OSHE ADMIN</h1>
+      <p>Enter the site editor password.</p>
+      <div class="admin-field" style="max-width:420px">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+        <button class="button button-accent" id="loginBtn" type="button">ENTER ADMIN</button>
+        <p id="loginError" style="color:#ff7770"></p>
+      </div>
+    </section>
+
+    <section class="admin-panel hidden" id="editorBox">
+      <h1>CONTENT ADMIN</h1>
+      <p>Update the music, tour dates, videos, social links, and About section without touching the site code. Merch and the Bookings email are fixed.</p>
+      <div class="notice"><strong>Important:</strong> <b>Save Preview</b> only tests changes in this browser. When everything looks right, click <b>Download content.js</b> and replace <code>assets/js/content.js</code> in GitHub.</div>
+
+      <section class="admin-section">
+        <div class="admin-section-head"><h2>Music</h2><span class="admin-help">Four square music slots are shown on the site.</span></div>
+        <div class="admin-repeater" id="musicEditor"></div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-head">
+          <div><h2>Tour Dates</h2><div class="admin-help">Button only appears when both the button label and link are filled in.</div></div>
+          <button class="admin-small-btn" id="addTourBtn" type="button">+ ADD TOUR DATE</button>
+        </div>
+        <div class="admin-repeater" id="tourEditor"></div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-head"><h2>Music Videos</h2><span class="admin-help">Paste the YouTube embed URL or the full iframe embed code. Both videos display directly on the site with no thumbnail overlay.</span></div>
+        <div class="admin-repeater" id="videoEditor"></div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-head"><h2>Social Media</h2><span class="admin-help">Leave any link blank to hide that social network on the site.</span></div>
+        <div class="admin-item-grid two">
+          <div class="admin-field"><label for="socialFacebook">Facebook URL</label><input id="socialFacebook" type="url" placeholder="https://facebook.com/..."></div>
+          <div class="admin-field"><label for="socialInstagram">Instagram URL</label><input id="socialInstagram" type="url" placeholder="https://instagram.com/..."></div>
+          <div class="admin-field"><label for="socialTiktok">TikTok URL</label><input id="socialTiktok" type="url" placeholder="https://tiktok.com/@..."></div>
+          <div class="admin-field"><label for="socialSoundcloud">SoundCloud URL</label><input id="socialSoundcloud" type="url" placeholder="https://soundcloud.com/..."></div>
+          <div class="admin-field"><label for="socialYoutube">YouTube URL</label><input id="socialYoutube" type="url" placeholder="https://youtube.com/@..."></div>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-head"><h2>About</h2></div>
+        <div class="admin-item-grid two">
+          <div class="admin-field"><label for="aboutHeading">Artist Heading</label><input id="aboutHeading" type="text"></div>
+          <div class="admin-field"><label for="aboutQuote">Bottom Quote</label><input id="aboutQuote" type="text"></div>
+          <div class="admin-field" style="grid-column:1/-1"><label for="aboutBody">Artist Bio</label><textarea id="aboutBody"></textarea></div>
+        </div>
+      </section>
+
+      <div class="admin-actions">
+        <button class="button button-accent" id="saveBtn" type="button">SAVE PREVIEW</button>
+        <button class="button" id="downloadBtn" type="button">DOWNLOAD content.js</button>
+        <button class="button" id="resetBtn" type="button">RESET PREVIEW</button>
+        <a class="button" href="index.html">VIEW SITE</a>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="assets/js/content.js"></script>
+  <script>
+  (function(){
+    const PASS='abc123';
+    const loginBox=document.getElementById('loginBox'),editorBox=document.getElementById('editorBox');
+    const musicEditor=document.getElementById('musicEditor'),tourEditor=document.getElementById('tourEditor'),videoEditor=document.getElementById('videoEditor'),status=document.getElementById('status');
+    let working=null;
+    const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const clone=o=>JSON.parse(JSON.stringify(o||{}));
+
+    function getCurrent(){
+      try{return JSON.parse(localStorage.getItem('babyfaceContent'))||clone(window.BABYFACE_CONTENT)}catch(e){return clone(window.BABYFACE_CONTENT)}
+    }
+    function normalize(d){
+      d=clone(d||{});d.artist=d.artist||{name:'BABYFACE OSHE'};d.music=Array.isArray(d.music)?d.music:[];d.tour=Array.isArray(d.tour)?d.tour:[];d.videos=Array.isArray(d.videos)?d.videos:[];d.about=d.about||{};d.socials=d.socials||{};
+      while(d.music.length<4)d.music.push({title:'Coming Soon',type:'Upcoming',year:'2026',audio:'',cover:'assets/images/babyface-bg.png'});d.music=d.music.slice(0,4);
+      while(d.videos.length<2)d.videos.push({title:'',embed:''});d.videos=d.videos.slice(0,2);
+      return d;
+    }
+    function input(label,name,value,type='text',help=''){
+      return `<div class="admin-field"><label>${esc(label)}</label><input type="${type}" data-field="${esc(name)}" value="${esc(value||'')}">${help?`<div class="admin-help">${esc(help)}</div>`:''}</div>`;
+    }
+    function textareaField(label,name,value,help=''){
+      return `<div class="admin-field"><label>${esc(label)}</label><textarea data-field="${esc(name)}" rows="4">${esc(value||'')}</textarea>${help?`<div class="admin-help">${esc(help)}</div>`:''}</div>`;
+    }
+    function musicCard(m,i){
+      return `<div class="admin-item" data-music-item="${i}"><div class="admin-item-head"><span class="admin-item-title">MUSIC SLOT ${i+1}</span></div><div class="admin-item-grid">
+        ${input('Song / Project Title','title',m.title)}
+        ${input('Type','type',m.type,'text','Example: Single, EP, Latest Release')}
+        ${input('Year','year',m.year)}
+        ${input('Audio File Path / URL','audio',m.audio,'text','Best: assets/audio/song-name.mp3 — GitHub /blob/ links are also accepted')}
+        ${input('Square Cover Art Path / URL','cover',m.cover,'text','Example: assets/images/my-song-cover.jpg — square artwork works best (1:1)')}
+      </div></div>`;
+    }
+    function tourCard(t,i){
+      return `<div class="admin-item" data-tour-item="${i}"><div class="admin-item-head"><span class="admin-item-title">TOUR DATE ${i+1}</span><button class="admin-small-btn danger" type="button" data-remove-tour="${i}">REMOVE</button></div><div class="admin-item-grid">
+        ${input('Date','date',t.date,'text','Example: SEP 18')}
+        ${input('City','city',t.city,'text','Example: LAS VEGAS, NV')}
+        ${input('Venue','venue',t.venue)}
+        ${input('Ticket Price','price',t.price,'text','Example: FREE or $25')}
+        ${input('Button Label','buttonLabel',t.buttonLabel,'text','Example: BUY TICKETS or MORE DETAILS')}
+        ${input('Button Link','link',t.link,'url','Leave label + link blank for no button')}
+      </div></div>`;
+    }
+    function videoCard(v,i){
+      return `<div class="admin-item" data-video-item="${i}"><div class="admin-item-head"><span class="admin-item-title">VIDEO ${i+1}</span></div><div class="admin-item-grid">
+        ${input('Video Title (optional)','title',v.title,'text','Used only for the embedded player title/accessibility.')}
+        ${textareaField('YouTube Embed URL / iframe Code','embed',v.embed,'Paste https://www.youtube.com/embed/VIDEO_ID or the full <iframe ...></iframe> code from YouTube Share → Embed.')}
+      </div></div>`;
+    }
+    function render(){
+      working=normalize(working||getCurrent());
+      musicEditor.innerHTML=working.music.map(musicCard).join('');
+      tourEditor.innerHTML=working.tour.length?working.tour.map(tourCard).join(''):'<div class="admin-help">No tour dates yet. Click “Add Tour Date.”</div>';
+      videoEditor.innerHTML=working.videos.map(videoCard).join('');
+      document.getElementById('socialFacebook').value=working.socials.facebook||'';
+      document.getElementById('socialInstagram').value=working.socials.instagram||'';
+      document.getElementById('socialTiktok').value=working.socials.tiktok||'';
+      document.getElementById('socialSoundcloud').value=working.socials.soundcloud||'';
+      document.getElementById('socialYoutube').value=working.socials.youtube||'';
+      document.getElementById('aboutHeading').value=working.about.heading||'';
+      document.getElementById('aboutBody').value=working.about.body||'';
+      document.getElementById('aboutQuote').value=working.about.quote||'';
+    }
+    function pull(){
+      const d=normalize(working||getCurrent());
+      d.music=[...musicEditor.querySelectorAll('[data-music-item]')].map(card=>{const o={};card.querySelectorAll('[data-field]').forEach(el=>o[el.dataset.field]=el.value.trim());return o});
+      d.tour=[...tourEditor.querySelectorAll('[data-tour-item]')].map(card=>{const o={};card.querySelectorAll('[data-field]').forEach(el=>o[el.dataset.field]=el.value.trim());return o}).filter(o=>o.date||o.city||o.venue||o.price||o.buttonLabel||o.link);
+      d.videos=[...videoEditor.querySelectorAll('[data-video-item]')].map(card=>{const o={};card.querySelectorAll('[data-field]').forEach(el=>o[el.dataset.field]=el.value.trim());return o});
+      d.socials={
+        facebook:document.getElementById('socialFacebook').value.trim(),
+        instagram:document.getElementById('socialInstagram').value.trim(),
+        tiktok:document.getElementById('socialTiktok').value.trim(),
+        soundcloud:document.getElementById('socialSoundcloud').value.trim(),
+        youtube:document.getElementById('socialYoutube').value.trim()
+      };
+      d.about={heading:document.getElementById('aboutHeading').value.trim(),body:document.getElementById('aboutBody').value.trim(),quote:document.getElementById('aboutQuote').value.trim()};
+      working=d;return d;
+    }
+    function showEditor(){loginBox.classList.add('hidden');editorBox.classList.remove('hidden');working=normalize(getCurrent());render()}
+
+    if(sessionStorage.getItem('osheAdmin')==='1')showEditor();
+    document.getElementById('loginBtn').addEventListener('click',()=>{if(document.getElementById('password').value===PASS){sessionStorage.setItem('osheAdmin','1');showEditor()}else document.getElementById('loginError').textContent='Wrong password.'});
+    document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click()});
+    document.getElementById('addTourBtn').addEventListener('click',()=>{pull();working.tour.push({date:'',city:'',venue:'',price:'',buttonLabel:'',link:''});render();setTimeout(()=>tourEditor.lastElementChild?.scrollIntoView({behavior:'smooth',block:'center'}),0)});
+    tourEditor.addEventListener('click',e=>{const btn=e.target.closest('[data-remove-tour]');if(!btn)return;pull();working.tour.splice(Number(btn.dataset.removeTour),1);render()});
+    document.getElementById('saveBtn').addEventListener('click',()=>{const d=pull();localStorage.setItem('babyfaceContent',JSON.stringify(d));status.textContent='Preview saved. Open the site in this same browser to see it.'});
+    document.getElementById('downloadBtn').addEventListener('click',()=>{const d=pull();const blob=new Blob(['window.BABYFACE_CONTENT = '+JSON.stringify(d,null,2)+';\n'],{type:'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='content.js';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);status.textContent='Downloaded content.js. Replace assets/js/content.js in GitHub with this file, then commit the change.'});
+    document.getElementById('resetBtn').addEventListener('click',()=>{localStorage.removeItem('babyfaceContent');working=normalize(clone(window.BABYFACE_CONTENT));render();status.textContent='Browser preview reset to the published content.'});
+  })();
+  </script>
+</body>
+</html>
